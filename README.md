@@ -67,6 +67,11 @@ You can have multiple `@Response` decorators
 ```php
 /**
 * @Response({
+*     code: 200
+*     description: get user
+*     ref: User
+* })
+* @Response({
 *     code: 302
 *     description: Redirect
 * })
