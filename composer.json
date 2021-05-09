@@ -1,0 +1,39 @@
+{
+    "name": "mezatsong/laravel-swagger-docs",
+    "description": "Swagger docs generator for Laravel api",
+    "type": "library",
+    "keywords": ["laravel", "swagger", "docs", "generator"],
+    "license": "MIT",
+    "authors": [
+        {
+            "name": "MEZATSONG TSAFACK Carrel",
+            "email": "meztsacar@gmail.com"
+        }
+    ],
+    "require": {
+        "php": "^7.3",
+        "doctrine/dbal": "2.*",
+        "phpdocumentor/reflection-docblock": "^5.2"
+    },
+    "require-dev": {
+        "laravel/passport": "^10.0"
+    },
+    "autoload": {
+        "files": [
+            "src/helpers.php"
+        ],
+        "psr-4": {
+            "Mezatsong\\SwaggerDocs\\": "src/"
+        }
+    },
+    "suggest": {
+        "ext-yaml": "Required to generate YAML"
+    },
+    "extra": {
+        "laravel": {
+            "providers": [
+                "Mezatsong\\SwaggerDocs\\SwaggerServiceProvider"
+            ]
+        }
+    }
+}
