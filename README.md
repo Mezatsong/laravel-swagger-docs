@@ -7,11 +7,12 @@ Also includes Swagger UI.
 This package is heavily inspired by the [darki73/laravel-swagger](https://github.com/darki73/laravel-swagger) and [kevupton/laravel-swagger](https://github.com/kevupton/laravel-swagger).  
 Usage is pretty similar to the [mtrajano/laravel-swagger](https://github.com/mtrajano/laravel-swagger) with the difference being:
 1. OAS3 support
-2. "Custom decorators" inspired by Nest.JS
-3. Automatic generation (assuming relevant configuration option is turned on)
-4. Inclusion of Swagger UI
-5. Models generations
-6. Generate operation tags based on route prefix or controller's name
+2. Custom decorators
+3. Custom responses
+4. Automatic generation (assuming relevant configuration option is turned on)
+5. Inclusion of Swagger UI
+6. Models generations
+7. Generate operation tags based on route prefix or controller's name
 
 
 ## Installation
@@ -64,20 +65,24 @@ public function someMethod(Request $request) {}
 
 ### @Response() decorator
 You can have multiple `@Response` decorators
+- The `code` property is required and must be the first in propery
+- You can use the optional `description` property to desscribe your response
+- You can use the optional `ref` property to refer a model, you can also wrap that model in [] to refer an array of that model or use the full model path inside, finally you can use a schema builder
 ```php
 /**
 * @Response({
 *     code: 200
-*     description: get user
+*     description: return user model
 *     ref: User
+* })
+* @Response({
+*     code: 400
+*     description: Bad Request, array of APIError model
+*     ref: [APIError]
 * })
 * @Response({
 *     code: 302
 *     description: Redirect
-* })
-* @Response({
-*     code: 400
-*     description: Bad Request
 * })
 * @Response({
 *     code: 500
@@ -85,7 +90,32 @@ You can have multiple `@Response` decorators
 * })
 */
 public function someMethod(Request $request) {}
+
+/**
+ * You can also refer object directly
+ * 
+ * 
+ * @Response({
+ *     code: 200
+ *     description: direct user model reference
+ *     ref: #/components/schemas/User
+ * })
+ */
+public function someMethod2(Request $request) {}
+
+/**
+ * Using P schema builder for Laravel Pagination
+ * 
+ * @Response({
+ *     code: 200
+ *     description: a laravel pagination instance with User model
+ *     ref: P(User)
+ * })
+ */
+public function someMethod3(Request $request) {}
 ```
+
+##### Note: You can see all available schema builder or create your own schema builder, explore swagger.schema_builders config for more informations.
 
 ### Custom Validators
 These validators are made purely for visual purposes, however, some of them can actually do validation

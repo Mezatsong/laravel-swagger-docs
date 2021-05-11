@@ -3,6 +3,13 @@
 return [
 
     /**
+     * Weather swagger is enabled
+     * if you set false, this will
+     * only hide swagger's route
+     */
+    'enable'                    => env('SWAGGER_ENABLE', false),
+
+    /**
      * API Title
      */
     'title'                     =>  env('APP_NAME', 'Application API Documentation'),
@@ -142,5 +149,16 @@ return [
         //'OAuth2'                =>  'authorizationCode',
         'bearerAuth'            =>  'http',
     ],
+
+    /**
+     * Schema builder for custom swagger responses.
+     *
+     * You can implement your own schema builder, see example in this existing implementation
+     * Note that Schema builder must implement Mezatsong\SwaggerDocs\Responses\SchemaBuilder
+     */
+    'schema_builders'            => [
+        'P' => \Mezatsong\SwaggerDocs\Responses\SchemaBuilders\LaravelPaginateSchemaBuilder::class,
+        'SP' => \Mezatsong\SwaggerDocs\Responses\SchemaBuilders\LaravelSimplePaginateSchemaBuilder::class,
+    ]
 
 ];

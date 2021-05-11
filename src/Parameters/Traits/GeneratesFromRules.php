@@ -34,6 +34,8 @@ trait GeneratesFromRules {
             return 'boolean';
         } elseif (in_array('array', $parameterRules)) {
             return 'array';
+        } elseif (in_array('date', $parameterRules)) {
+            return 'date';
         } else {
             return 'string';
         }

@@ -2,6 +2,7 @@
 
 use Exception;
 use Mezatsong\SwaggerDocs\Exceptions\InvalidDefinitionException;
+use ReflectionClass;
 use ReflectionMethod;
 use ReflectionException;
 use Illuminate\Support\Arr;
@@ -19,6 +20,7 @@ use phpDocumentor\Reflection\DocBlock\Tags\Generic;
 use Laravel\Passport\Http\Middleware\CheckForAnyScope;
 use Mezatsong\SwaggerDocs\Definitions\DefinitionGenerator;
 use Mezatsong\SwaggerDocs\Exceptions\InvalidAuthenticationFlow;
+use Mezatsong\SwaggerDocs\Exceptions\SchemaBuilderNotFound;
 
 /**
  * Class Generator
@@ -256,11 +258,11 @@ class Generator {
         $actionMethodInstance = $this->getActionMethodInstance($route);
         $documentationBlock = $actionMethodInstance ? ($actionMethodInstance->getDocComment() ?: ''): '';
 
-        $documentation = $this->parseActionDocumentationBlock($documentationBlock);
+        $documentation = $this->parseActionDocumentationBlock($documentationBlock, $route->uri());
 
         $this->addActionsParameters($documentation, $route, $method, $actionMethodInstance);
 
-        $this->addActionsResponses($documentation, $route, $method, $actionMethodInstance);
+        $this->addActionsResponses($documentation);
 
         if ($this->hasSecurityDefinitions) {
             $this->addActionScopes($documentation, $route);
@@ -318,13 +320,14 @@ class Generator {
      * @param string $documentationBlock
      * @return array
      */
-    private function parseActionDocumentationBlock(string $documentationBlock): array {
+    private function parseActionDocumentationBlock(string $documentationBlock, string $uri): array {
         $documentation = [
             'summary'       =>  '',
             'description'   =>  '',
             'deprecated'    =>  false,
             'responses'     =>  [],
         ];
+
         if (empty($documentationBlock) || !$this->fromConfig('parse.docBlock', false)) {
             return $documentation;
         }
@@ -365,25 +368,89 @@ class Generator {
                         } else if ($key === 'description') {
                             $documentation['responses'][$responseCode]['description'] = $value;
                         } else if ($key === 'ref') {
-                            $ref = $value;
-                            if (!Str::startsWith($value, '#/components/schemas/')) {
-                                foreach ($this->definitionGenerator->getModels() as $item) {
-                                    if (Str::contains($item, $value)) {
-                                        $ref = "#/components/schemas/$value";
-                                    }
+
+                            $value = str_replace(' ', '', $value);
+                            $matches = [];
+
+                            if (Str::startsWith($value, '[') && Str::endsWith($value, ']')) {
+                                $modelName = trim(Str::replaceFirst('[', '' , Str::replaceLast(']', '' , $value)));
+                                $ref = $this->toSwaggerModelPath($modelName);
+                                $items = [
+                                    'type' => 'array',
+                                    'items' => [
+                                        'type' => 'object',
+                                        '$ref' => $ref
+                                    ]
+                                ];
+                                $documentation['responses'][$responseCode]['content']['application/json']['schema'] = $items;
+                            } else if (preg_match("(([A-Za-z]{1,})\(([A-Za-z]{1,})\))", $value, $matches) === 1) {
+                                $schema = $this->generateCustomResponseSchema(
+                                    $matches[1],
+                                    $matches[2],
+                                    $uri
+                                );
+                                if (\count($schema) > 0) {
+                                    $documentation['responses'][$responseCode]['content']['application/json']['schema'] = $schema;
                                 }
+                            } else {
+                                $ref = $this->toSwaggerModelPath($value);
+                                $documentation['responses'][$responseCode]['content']['application/json']['schema']['$ref'] = $ref;
                             }
-                            $documentation['responses'][$responseCode]['content']['application/json']['schema']['$ref'] = $ref;
+
                         }
                     }
                 }
             }
 
-
-            return $documentation;
         } catch (Exception $exception) {
-            return $documentation;
+            if ($exception instanceof SchemaBuilderNotFound) {
+                throw $exception;
+            }
         }
+
+        return $documentation;
+    }
+
+
+    /**
+     * Read schemas builder config and call the matched one
+     *
+     * @throws SchemaBuilderNotFound
+     */
+    private function generateCustomResponseSchema(string $operation, string $model, string $uri) {
+        $ref = $this->toSwaggerModelPath($model);
+        $schemaBuilders = $this->fromConfig('schema_builders');
+
+        if (!Arr::has($schemaBuilders, $operation)) {
+            throw new SchemaBuilderNotFound("schema builder $operation not found in swagger.schema_builders config");
+        }
+
+        $actionClass = new ReflectionClass($schemaBuilders[$operation]);
+
+        try {
+            return $actionClass->newInstanceWithoutConstructor()->build($ref, $uri);
+        } catch(Exception $e) {
+            throw new Exception("SchemaBuilder must implements Mezatsong\SwaggerDocs\Responses\SchemaBuilder interface");
+        }
+    }
+
+
+    /**
+     * Turn a model name to swagger path to that model or
+     * return the same string if it's already a valide path
+     * @param string $value
+     * @return string
+     */
+    private function toSwaggerModelPath(string $value): string {
+        if (!Str::startsWith($value, '#/components/schemas/')) {
+            foreach ($this->definitionGenerator->getModels() as $item) {
+                if (Str::endsWith($item, $value)) {
+                    return "#/components/schemas/$value";
+                }
+            }
+        }
+
+        return $value;
     }
 
 
@@ -394,9 +461,7 @@ class Generator {
      * @param string $method
      * @param ReflectionMethod|null $actionInstance
      */
-    private function addActionsResponses(array & $information, DataObjects\Route $route, string $method, ?ReflectionMethod $actionInstance): void {
-
-
+    private function addActionsResponses(array & $information): void {
 
         if (\count(Arr::get($information, 'responses')) === 0) {
             Arr::set($information, 'responses', [

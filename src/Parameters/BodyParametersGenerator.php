@@ -130,7 +130,7 @@ class BodyParametersGenerator implements ParametersGenerator {
      */
     protected function createNewPropertyObject(string $type, array $rules): array {
         $propertyObject = [
-            'type'      =>  $type,
+            'type' =>  $type,
         ];
 
         if ($enums = $this->getEnumValues($rules)) {
