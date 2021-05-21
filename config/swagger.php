@@ -151,6 +151,15 @@ return [
     ],
 
     /**
+     * List here your security middlewares
+     * The paths under these middlewares will be protected
+     */
+    'security_middlewares'      =>  [
+        'auth:api',
+        'auth:sanctum',
+    ],
+
+    /**
      * Schema builder for custom swagger responses.
      *
      * You can implement your own schema builder, see example in this existing implementation

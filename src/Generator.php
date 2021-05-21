@@ -100,7 +100,7 @@ class Generator {
         $this->definitionGenerator = new DefinitionGenerator(Arr::get($this->ignored, 'models'));
         Arr::set($documentation, 'components.schemas', $this->definitionGenerator->generateSchemas());
 
-        if ($this->fromConfig('parse.security', false) && $this->hasOAuthRoutes($applicationRoutes)) {
+        if ($this->fromConfig('parse.security', false) /*&& $this->hasOAuthRoutes($applicationRoutes)*/) {
             Arr::set($documentation, 'components.securitySchemes', $this->generateSecurityDefinitions());
             $this->hasSecurityDefinitions = true;
         }
@@ -512,7 +512,7 @@ class Generator {
      */
     private function addActionScopes(array & $information, DataObjects\Route $route) {
         foreach ($route->middleware() as $middleware) {
-            if ($this->isPassportScopeMiddleware($middleware)) {
+            if ($this->isSecurityMiddleware($middleware)) {
                 $security = [
                     '_temp'     =>  $middleware->parameters(),
                 ];
@@ -567,6 +567,15 @@ class Generator {
             default:
                 return new Parameters\QueryParametersGenerator($rules);
         }
+    }
+
+    /**
+     * Check whether specified middleware belongs to registered security middlewares
+     * @param DataObjects\Middleware $middleware
+     * @return bool
+     */
+    private function isSecurityMiddleware(DataObjects\Middleware $middleware) {
+        return in_array("$middleware", $this->fromConfig('security_middlewares'));
     }
 
     /**

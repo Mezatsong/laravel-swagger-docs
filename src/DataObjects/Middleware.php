@@ -9,6 +9,12 @@ use Illuminate\Support\Arr;
 class Middleware {
 
     /**
+     * Middleware origal string
+     * @var string
+     */
+    private string $original;
+
+    /**
      * Middleware name
      * @var string
      */
@@ -25,6 +31,7 @@ class Middleware {
      * @param string $middleware
      */
     public function __construct(string $middleware) {
+        $this->original = $middleware;
         $tokens = explode(':', $middleware, 2);
         $this->name = Arr::first($tokens);
         $this->parameters = \count($tokens) > 1 ? explode(',', Arr::last($tokens)): [];
@@ -44,6 +51,10 @@ class Middleware {
      */
     public function parameters(): array {
         return $this->parameters;
+    }
+
+    public function __toString(): string {
+        return $this->original;
     }
 
 }

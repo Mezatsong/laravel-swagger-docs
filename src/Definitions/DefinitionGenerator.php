@@ -1,10 +1,8 @@
 <?php namespace Mezatsong\SwaggerDocs\Definitions;
 
 use ReflectionClass;
-use Illuminate\Support\Collection;
 use Illuminate\Container\Container;
 use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Facades\Str;
 use Illuminate\Support\Facades\File;
 use Illuminate\Support\Facades\Schema;
 use Illuminate\Database\Eloquent\Model;
