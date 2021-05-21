@@ -1,20 +1,20 @@
-<?php namespace Mezatsong\SwaggerDocs\Responses\SchemaBuilders;
+<?php
+
+namespace DummyNamespace;
 
 use Illuminate\Support\Str;
 use Mezatsong\SwaggerDocs\Responses\SchemaBuilder;
 
-/**
- * Class
- * @package Mezatsong\SwaggerDocs\Responses\SchemaBuilders
- */
-class LaravelPaginateSchemaBuilder implements SchemaBuilder {
+class DummyClass implements SchemaBuilder
+{
 
     /**
-     * Build a schema for Laravel pagination
+     * Build and return a custom swagger schema
+     * Here is an example with Laravel pagination
      *
-     * @param string $modelRef the swagger reference for model
-     * @param string $uri the current parsing uri
-     * @return array
+     * @param string $modelRef a model swagger ref, (ex: #/components/schemas/User)
+     * @param string $uri a current parsing uri
+     * @return array an associative array representing the swagger schema for this resposne
      */
     public function build(string $modelRef, string $uri): array {
         if (!Str::startsWith($uri, '/')) {
@@ -88,5 +88,4 @@ class LaravelPaginateSchemaBuilder implements SchemaBuilder {
             ]
         ];
     }
-
 }

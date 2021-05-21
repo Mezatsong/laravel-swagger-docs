@@ -5,6 +5,7 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Support\ServiceProvider;
 use Mezatsong\SwaggerDocs\Commands\GenerateSwaggerDocumentation;
+use Mezatsong\SwaggerDocs\Commands\MakeSwaggerSchemaBuilder;
 
 /**
  * Class SwaggerServiceProvider
@@ -19,7 +20,8 @@ class SwaggerServiceProvider extends ServiceProvider {
     public function boot(): void {
         if ($this->app->runningInConsole()) {
             $this->commands([
-                GenerateSwaggerDocumentation::class
+                GenerateSwaggerDocumentation::class,
+                MakeSwaggerSchemaBuilder::class
             ]);
         }
 

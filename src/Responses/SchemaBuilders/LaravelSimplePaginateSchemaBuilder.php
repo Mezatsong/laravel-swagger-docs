@@ -12,6 +12,9 @@ class LaravelSimplePaginateSchemaBuilder implements SchemaBuilder {
 
     /**
      * Build a schema for Laravel simple pagination
+     *
+     * @param string $modelRef the swagger reference for model
+     * @param string $uri the current parsing uri
      * @return array
      */
     public function build(string $modelRef, string $uri): array {
