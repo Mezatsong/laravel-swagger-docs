@@ -34,11 +34,97 @@ trait GeneratesFromRules {
             return 'boolean';
         } elseif (in_array('array', $parameterRules)) {
             return 'array';
-        } elseif (in_array('date', $parameterRules)) {
-            return 'date';
         } else {
             return 'string';
         }
+    }
+
+    /**
+     * Get parameter format
+     * @param array $parameterRules
+     * @return string
+     */
+    protected function getParameterExtra(string $type, array $parameterRules): array {
+
+        $extra = [];
+
+        if (in_array('nullable', $parameterRules)) {
+            $extra['nullable'] = true;
+        }
+
+        if (in_array($type, ['numeric', 'integer'])) {
+            foreach ($parameterRules as $rule) {
+                if (Str::startsWith($rule, 'min')) {
+                    [$_, $value] = explode(':', $rule);
+                    $extra['minimum'] = intval(trim($value));
+                }
+
+                if (Str::startsWith($rule, 'max')) {
+                    [$_, $value] = explode(':', $rule);
+                    $extra['maximum'] = intval(trim($value));
+                }
+
+                if (Str::startsWith($rule, 'multiple_of')) {
+                    [$_, $value] = explode(':', $rule);
+                    $extra['multipleOf'] = intval(trim($value));
+                }
+            }
+        }
+
+        if ($type == 'string') {
+            foreach ($parameterRules as $rule) {
+                if (Str::startsWith($rule, 'min')) {
+                    [$_, $value] = explode(':', $rule);
+                    $extra['minLength'] = intval(trim($value));
+                }
+
+                if (Str::startsWith($rule, 'max')) {
+                    [$_, $value] = explode(':', $rule);
+                    $extra['maxLength'] = intval(trim($value));
+                }
+
+                $formatMap = [
+                    'byte' => ['date'],
+                    'binary' => ['file', 'image', 'mimetypes', 'mimes'],
+                    'date' => ['date'],
+                    'password' => ['password'],
+
+                    // custom, these are not OpenAPI built-in
+                    'email' => ['email'],
+                    'uuid' => ['uuid'],
+                    'uri' => ['url'],
+                    'ip' => ['ip'],
+                    'ipv4' => ['ipv4'],
+                    'ipv6' => ['ipv6'],
+                    'json' => ['json']
+                ];
+
+                foreach($formatMap as $format => $formatRules) {
+                    if (at_least_one_in_array($formatRules, $parameterRules)) {
+                        $extra['format'] = $format;
+                    }
+                }
+
+                if (!isset($extra['format'])) {
+                    if (
+                        Str::startsWith($rule, 'after') ||
+                        Str::startsWith($rule, 'after_or_equal') ||
+                        Str::startsWith($rule, 'before') ||
+                        Str::startsWith($rule, 'before_or_equal')
+                    ) {
+                        $extra['format'] = 'date';
+                    }
+                }
+
+                if (Str::startsWith($rule, 'regex')) {
+                    [$_, $value] = explode(':', $rule);
+                    $extra['pattern'] = trim($value);
+                }
+            }
+
+        }
+
+        return $extra;
     }
 
     /**

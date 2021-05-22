@@ -2,6 +2,28 @@
 
 use Illuminate\Support\Facades\File;
 
+if (!function_exists('at_least_one_in_array')) {
+    function at_least_one_in_array(array $items, array $haystack, bool $strict = false): bool {
+        foreach($items as $item) {
+            if (in_array($item, $haystack, $strict)) {
+                return true;
+            }
+        }
+        return false;
+    }
+}
+
+if (!function_exists('all_in_array')) {
+    function all_in_array(array $items, array $haystack, bool $strict = false): bool {
+        foreach($items as $item) {
+            if (!in_array($item, $haystack, $strict)) {
+                return false;
+            }
+        }
+        return true;
+    }
+}
+
 if (!function_exists('strip_optional_char')) {
     function strip_optional_char(string $uri): string {
         return str_replace('?', '', $uri);

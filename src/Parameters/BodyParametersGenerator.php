@@ -56,10 +56,19 @@ class BodyParametersGenerator implements ParametersGenerator {
         }
 
         Arr::set($schema, 'properties', $properties);
+
+        $mediaType = 'application/json'; // or  "application/x-www-form-urlencoded"
+        foreach($properties as $prop) {
+            if (isset($prop['format']) && $prop['format'] == 'binary') {
+                $mediaType = 'multipart/form-data';
+            }
+        }
+
+
         return [
-            'content'               =>  [
-                'application/json'  =>  [
-                    'schema'        =>  $schema
+            'content' =>  [
+                $mediaType  =>  [
+                    'schema' =>  $schema
                 ]
             ]
         ];
@@ -99,6 +108,10 @@ class BodyParametersGenerator implements ParametersGenerator {
         if (!Arr::has($properties, $name)) {
             $propertyObject = $this->createNewPropertyObject($type, $rules);
             Arr::set($properties, $name, $propertyObject);
+            $extra = $this->getParameterExtra($type, $rules);
+            foreach($extra as $key => $value) {
+                Arr::set($properties, $name . '.' . $key, $value);
+            }
         } else {
             Arr::set($properties, $name . '.type', $type);
         }

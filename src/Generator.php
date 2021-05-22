@@ -540,7 +540,7 @@ class Generator {
         $parameters = $actionInstance->getParameters();
 
         foreach ($parameters as $parameter) {
-            $class = $parameter->getClass();
+            $class = $parameter->getType();
             if (!$class) {
                 continue;
             }
