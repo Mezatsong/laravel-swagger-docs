@@ -69,7 +69,7 @@ class SwaggerController extends BaseController {
      * @return Response
      */
     public function api(Request $request): Response {
-        $url = env('APP_URL');
+        $url = config('app.url');
         if (!Str::startsWith($url, 'http://') && !Str::startsWith($url, 'https://')) {
             $schema = swagger_is_connection_secure() ? 'https://' : 'http://';
             $url = $schema . $url;
