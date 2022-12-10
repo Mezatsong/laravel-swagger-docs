@@ -48,7 +48,11 @@ class SwaggerServiceProvider extends ServiceProvider {
 
         $this->loadValidationRules();
 
-        DB::getDoctrineSchemaManager()->getDatabasePlatform()->registerDoctrineTypeMapping('enum', 'string');
+        try {
+            DB::getDoctrineSchemaManager()->getDatabasePlatform()->registerDoctrineTypeMapping('enum', 'string');
+        } catch (\Exception $e) {
+            error_log('Could not register enum type as string because of connexion error.');
+        }
 
         if (file_exists($file = __DIR__ . '/helpers.php')) {
             require $file;
