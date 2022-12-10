@@ -422,7 +422,7 @@ class Generator {
         $schemaBuilders = $this->fromConfig('schema_builders');
 
         if (!Arr::has($schemaBuilders, $operation)) {
-            throw new SchemaBuilderNotFound("schema builder $operation not found in swagger.schema_builders config");
+            throw new SchemaBuilderNotFound("schema builder $operation not found in swagger.schema_builders config when generating $uri");
         }
 
         $actionClass = new ReflectionClass($schemaBuilders[$operation]);
@@ -607,7 +607,8 @@ class Generator {
         return Str::of((string) $rawTag)
             ->replace('({', '')
             ->replace('})', '')
-            ->explode(PHP_EOL)
+            ->replace(["\r\n", "\n\r", "\r", PHP_EOL], "\n")
+            ->explode("\n")
             ->filter(fn(string $value) => strlen($value) > 1)
             ->map(fn(string $value) => rtrim(trim($value), ','))
             ->toArray();
