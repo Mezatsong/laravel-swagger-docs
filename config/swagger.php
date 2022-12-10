@@ -7,7 +7,7 @@ return [
      * if you set false, this will
      * only hide swagger's route
      */
-    'enable'                    => env('SWAGGER_ENABLE', false),
+    'enable'                    => env('SWAGGER_ENABLE', true),
 
     /**
      * API Title
