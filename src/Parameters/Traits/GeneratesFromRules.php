@@ -54,6 +54,7 @@ trait GeneratesFromRules {
 
         if (in_array($type, ['numeric', 'integer'])) {
             foreach ($parameterRules as $rule) {
+                if(is_object($rule)) continue;
                 if (Str::startsWith($rule, 'min')) {
                     [$_, $value] = explode(':', $rule);
                     $extra['minimum'] = intval(trim($value));
@@ -73,6 +74,7 @@ trait GeneratesFromRules {
 
         if ($type == 'string') {
             foreach ($parameterRules as $rule) {
+                if(is_object($rule)) continue;
                 if (Str::startsWith($rule, 'min')) {
                     [$_, $value] = explode(':', $rule);
                     $extra['minLength'] = intval(trim($value));
