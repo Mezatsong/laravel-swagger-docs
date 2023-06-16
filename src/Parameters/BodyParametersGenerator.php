@@ -118,7 +118,7 @@ class BodyParametersGenerator implements ParametersGenerator {
 
         if ($type === 'array') {
             $this->addToProperties($properties[$name]['items'], $nameTokens, $rules);
-        } else if ($type === 'object') {
+        } else if ($type === 'object' && isset($properties[$name]['properties'])) {
             $this->addToProperties($properties[$name]['properties'], $nameTokens, $rules);
         }
     }
