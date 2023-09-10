@@ -1,13 +1,14 @@
 <?php namespace Mezatsong\SwaggerDocs\Definitions;
 
-use ReflectionClass;
+use Doctrine\DBAL\Types\Type;
 use Illuminate\Container\Container;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\File;
 use Illuminate\Support\Facades\Schema;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Arr;
-use phpDocumentor\Reflection\DocBlockFactory;
+use Illuminate\Support\Str;
+use ReflectionClass;
 
 /**
  * Class DefinitionGenerator
@@ -74,6 +75,9 @@ class DefinitionGenerator {
                 $with = $reflection->getProperty('with');
                 $with->setAccessible(true);
 
+                $appends = $reflection->getProperty('appends');
+                $appends->setAccessible(true);
+
                 $table = $obj->getTable();
                 $list = Schema::getColumnListing($table);
                 $list = array_diff($list, $obj->getHidden());
@@ -94,7 +98,7 @@ class DefinitionGenerator {
                     $column = $conn->getDoctrineColumn($table, $item);
 
                     $data = [
-                        'type' => $column->getType()->getName()
+                        'type' => Type::getTypeRegistry()->lookupName($column->getType())
                     ];
 
                     $description = $column->getComment();
@@ -122,6 +126,35 @@ class DefinitionGenerator {
                         'type' => 'object',
                         '$ref' => '#/components/schemas/' . last(explode('\\', $class)),
                     ];
+                }
+
+                foreach ($appends->getValue($obj) as $item) {
+                    $methodeName = 'get' . ucfirst(Str::camel($item)) . 'Attribute';
+                    $reflectionMethod = $reflection->getMethod($methodeName);
+                    $returnType = $reflectionMethod->getReturnType();
+
+                    $data = [];
+
+                    // A schema without a type matches any data type – numbers, strings, objects, and so on.
+                    if ($reflectionMethod->hasReturnType()) {
+                        $type = $returnType->getName();
+
+                        if (Str::contains($type, '\\')) {
+                            $data = [
+                                'type' => 'object',
+                                '$ref' => '#/components/schemas/' . last(explode('\\', $type)),
+                            ];
+                        } else {
+                            $data['type'] = $type;
+                            $this->addExampleKey($data);
+                        }
+                    }
+
+                    $properties[$item] = $data;
+
+                    if ($returnType && false == $returnType->allowsNull()) {
+                        $required[] = $item;
+                    }
                 }
 
                 $definition = [
