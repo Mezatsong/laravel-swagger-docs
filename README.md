@@ -141,3 +141,7 @@ $rules = [
     'take'          =>  'swagger_default:1|swagger_min:1|swagger_max:50:fail' // This will also fail if the `take` parameter will be greater than 50
 ];
 ```
+
+---
+
+<a href="https://www.buymeacoffee.com/mezatsong" target="_blank"><img src="https://cdn.buymeacoffee.com/buttons/v2/default-yellow.png" alt="Buy Me A Coffee" style="height: 60px !important;width: 217px !important;" ></a>
