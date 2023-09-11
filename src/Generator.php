@@ -105,12 +105,13 @@ class Generator {
             $this->hasSecurityDefinitions = true;
         }
 
+        $basePath = $this->routeFilter ?: $this->fromConfig('api_base_path');
         foreach ($applicationRoutes as $route) {
             if ($this->isFilteredRoute($route)) {
                 continue;
             }
 
-            $uri = Str::replaceFirst($documentation['basePath'], '', $route->uri());
+            $uri = Str::replaceFirst($basePath, '', $route->uri());
             $pathKey = 'paths.' . $uri;
 
             if (!Arr::has($documentation, $pathKey)) {
@@ -143,7 +144,6 @@ class Generator {
                 'description'       =>  $this->fromConfig('description'),
                 'version'           =>  $this->fromConfig('version')
             ],
-            'basePath'              =>  $this->routeFilter ?: $this->fromConfig('api_base_path'),
             'servers'               =>  $this->generateServersList(),
             'paths'                 =>  [],
             'tags'                  =>  $this->fromConfig('tags'),
@@ -267,7 +267,6 @@ class Generator {
         if ($this->hasSecurityDefinitions) {
             $this->addActionScopes($documentation, $route);
         }
-
 
         if (!Arr::has($documentation, 'tags') || \count(Arr::get($documentation, 'tags')) == 0) {
 
@@ -488,20 +487,23 @@ class Generator {
     private function addActionsParameters(array & $information, DataObjects\Route $route, string $method, ?ReflectionMethod $actionInstance): void {
         $rules = $this->retrieveFormRules($actionInstance) ?: [];
         $parameters = (new Parameters\PathParametersGenerator($route->originalUri()))->getParameters();
+        $requestBody = [];
 
-        $key = 'parameters';
         if (\count($rules) > 0) {
             $parametersGenerator = $this->getParametersGenerator($rules, $method);
-            switch ($parametersGenerator->getParameterLocation()) {
-                case 'body':
-                    $key = 'requestBody';
-                    break;
+            if ('body' == $parametersGenerator->getParameterLocation()) {
+                $requestBody = $parametersGenerator->getParameters();
+            } else {
+                $parameters = array_merge($parameters, $parametersGenerator->getParameters());
             }
-            $parameters = array_merge($parameters, $parametersGenerator->getParameters());
         }
 
         if (\count($parameters) > 0) {
-            Arr::set($information, $key, $parameters);
+            Arr::set($information, 'parameters', $parameters);
+        }
+
+        if (\count($requestBody) > 0) {
+            Arr::set($information, 'requestBody', $requestBody);
         }
     }
 

@@ -97,19 +97,25 @@ class DefinitionGenerator {
                      */
                     $column = $conn->getDoctrineColumn($table, $item);
 
-                    $data = [
-                        'type' => Type::getTypeRegistry()->lookupName($column->getType())
-                    ];
+                    $data = $this->convertDBalTypeToSwaggerType(
+                        Type::getTypeRegistry()->lookupName($column->getType())
+                    );
+
+                    if ($data['type'] == 'string' && ($len = $column->getLength())) {
+                        $data['description'] .= "($len)";
+                    }
 
                     $description = $column->getComment();
                     if (!is_null($description)) {
-                        $data['description'] = $description;
+                        $data['description'] .= ": $description";
                     }
 
                     $default = $column->getDefault();
                     if (!is_null($default)) {
                         $data['default'] = $default;
                     }
+                    
+                    $data['nullable'] = ! $column->getNotnull();
 
                     $this->addExampleKey($data);
 
@@ -159,9 +165,12 @@ class DefinitionGenerator {
 
                 $definition = [
                     'type' => 'object',
-                    'required' => $required,
-                    'properties' => $properties,
+                    'properties' => (object) $properties,
                 ];
+                
+                if ( ! empty($required)) {
+                    $definition['required'] = $required;
+                }
 
                 $schemas[ $this->getModelName($obj) ] = $definition;
             }
@@ -220,6 +229,9 @@ class DefinitionGenerator {
                 case 'datetime':
                     Arr::set($property, 'example', date('Y-m-d H:i:s'));
                     break;
+                case 'timestamp':
+                    Arr::set($property, 'example', date('Y-m-d H:i:s'));
+                    break;
                 case 'string':
                     Arr::set($property, 'example', 'string');
                     break;
@@ -235,5 +247,82 @@ class DefinitionGenerator {
                     break;
             }
         }
+    }
+
+    /**
+     * @return array array of with 'type' and 'format' as keys
+     */
+    private function convertDBalTypeToSwaggerType(string $type): array {
+        $lowerType = strtolower($type);
+        switch ($lowerType) {
+            case 'bigserial':
+            case 'bigint':
+                $property = [
+                    'type' => 'integer', 
+                    'format' => 'int64'
+                ];
+                break;
+            case 'serial':
+            case 'integer':
+            case 'mediumint':
+            case 'smallint':
+            case 'tinyint':
+            case 'tinyint':
+            case 'year':
+                $property = ['type' => 'integer'];
+                break;
+            case 'float':
+                $property = [
+                    'type' => 'number',
+                    'format' => 'float'
+                ];
+                break;
+            case 'decimal':
+            case 'double':
+            case 'real':
+                $property = [
+                    'type' => 'number',
+                    'format' => 'double'
+                ];
+                break;
+            case 'boolean':
+                $property = ['type' => 'boolean'];
+                break;
+            case 'date':
+                $property = [
+                    'type' => 'string',
+                    'format' => 'date',
+                ];
+                break;
+            case 'datetime':
+            case 'timestamp':
+                $property = [
+                    'type' => 'string',
+                    'format' => 'date-time',
+                ];
+                break;
+            case 'binary':
+            case 'varbinary':
+            case 'blob':
+                $property = [
+                    'type' => 'string',
+                    'format' => 'binary',
+                ];
+                break;
+            case 'time':
+            case 'string':
+            case 'text':
+            case 'char':
+            case 'varchar':
+            case 'enum':
+            case 'set':
+            default:
+                $property = ['type' => 'string'];
+                break;
+        }
+
+        $property['description'] = $type;
+
+        return $property;
     }
 }

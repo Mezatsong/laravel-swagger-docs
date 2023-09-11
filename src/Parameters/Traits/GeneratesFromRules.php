@@ -42,7 +42,7 @@ trait GeneratesFromRules {
     /**
      * Get parameter format
      * @param array $parameterRules
-     * @return string
+     * @return array
      */
     protected function getParameterExtra(string $type, array $parameterRules): array {
 
