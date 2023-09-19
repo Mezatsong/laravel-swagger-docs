@@ -1,7 +1,10 @@
-<?php namespace Mezatsong\SwaggerDocs;
+<?php 
+
+namespace Mezatsong\SwaggerDocs;
 
 use Illuminate\Support\Arr;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Support\ServiceProvider;
 use Mezatsong\SwaggerDocs\Commands\GenerateSwaggerDocumentation;
@@ -49,9 +52,12 @@ class SwaggerServiceProvider extends ServiceProvider {
         $this->loadValidationRules();
 
         try {
-            DB::getDoctrineSchemaManager()->getDatabasePlatform()->registerDoctrineTypeMapping('enum', 'string');
+            DB::connection()
+                ->getDoctrineConnection()
+                ->getDatabasePlatform()
+                ->registerDoctrineTypeMapping('enum', 'string');
         } catch (\Exception $e) {
-            error_log('Could not register enum type as string because of connexion error.');
+            Log::error('[Mezatsong\SwaggerDocs] Could not register enum type as string because of connexion error.');
         }
 
         if (file_exists($file = __DIR__ . '/helpers.php')) {

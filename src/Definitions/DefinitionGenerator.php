@@ -1,12 +1,15 @@
-<?php namespace Mezatsong\SwaggerDocs\Definitions;
+<?php 
+
+namespace Mezatsong\SwaggerDocs\Definitions;
 
 use Doctrine\DBAL\Types\Type;
 use Illuminate\Container\Container;
+use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\File;
 use Illuminate\Support\Facades\Schema;
-use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Arr;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Str;
 use ReflectionClass;
 
@@ -78,6 +81,17 @@ class DefinitionGenerator {
                 $appends = $reflection->getProperty('appends');
                 $appends->setAccessible(true);
 
+                $relations = collect($reflection->getMethods())
+                    ->filter(
+                        fn($method) => !empty($method->getReturnType()) &&
+                            str_contains(
+                                $method->getReturnType(), 
+                                \Illuminate\Database\Eloquent\Relations::class
+                            )
+                    )
+                    ->pluck('name')
+                    ->all();
+
                 $table = $obj->getTable();
                 $list = Schema::getColumnListing($table);
                 $list = array_diff($list, $obj->getHidden());
@@ -126,16 +140,33 @@ class DefinitionGenerator {
                     }
                 }
 
-                foreach ($with->getValue($obj) as $item) {
-                    $class = get_class($obj->{$item}()->getModel());
-                    $properties[$item] = [
+                foreach ($relations as $relationName) {
+                    $relatedClass = get_class($obj->{$relationName}()->getRelated());
+                    $refObject = [
                         'type' => 'object',
-                        '$ref' => '#/components/schemas/' . last(explode('\\', $class)),
+                        '$ref' => '#/components/schemas/' . last(explode('\\', $relatedClass)),
                     ];
+                    
+                    $resultsClass = get_class((object) ($obj->{$relationName}()->getResults()));
+
+                    if (str_contains($resultsClass, \Illuminate\Database\Eloquent\Collection::class)) {
+                        $properties[$relationName] = [
+                            'type' => 'array',
+                            'items'=> $refObject
+                        ];
+                    } else {
+                        $properties[$relationName] = $refObject;
+                    }
                 }
+                
+                $required = array_merge($required, $with->getValue($obj));
 
                 foreach ($appends->getValue($obj) as $item) {
                     $methodeName = 'get' . ucfirst(Str::camel($item)) . 'Attribute';
+                    if ( ! $reflection->hasMethod($methodeName)) {
+                        Log::warning("[Mezatsong\SwaggerDocs] Method $model::$methodeName not found while parsing '$item' attribute");
+                        continue;
+                    }
                     $reflectionMethod = $reflection->getMethod($methodeName);
                     $returnType = $reflectionMethod->getReturnType();
 
