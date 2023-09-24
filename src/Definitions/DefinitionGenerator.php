@@ -75,8 +75,9 @@ class DefinitionGenerator {
 
             if ($obj instanceof Model) { //check to make sure it is a model
                 $reflection = new ReflectionClass($obj);
-                $with = $reflection->getProperty('with');
-                $with->setAccessible(true);
+                
+                // $with = $reflection->getProperty('with');
+                // $with->setAccessible(true);
 
                 $appends = $reflection->getProperty('appends');
                 $appends->setAccessible(true);
@@ -159,7 +160,7 @@ class DefinitionGenerator {
                     }
                 }
                 
-                $required = array_merge($required, $with->getValue($obj));
+                // $required = array_merge($required, $with->getValue($obj));
 
                 foreach ($appends->getValue($obj) as $item) {
                     $methodeName = 'get' . ucfirst(Str::camel($item)) . 'Attribute';
