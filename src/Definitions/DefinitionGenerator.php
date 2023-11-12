@@ -95,6 +95,7 @@ class DefinitionGenerator {
 
                 $table = $obj->getTable();
                 $list = Schema::getColumnListing($table);
+                $list = Schema::connection($obj->getConnectionName())->getColumnListing($table);
                 $list = array_diff($list, $obj->getHidden());
 
                 $properties = [];
@@ -105,7 +106,7 @@ class DefinitionGenerator {
                     /**
                     * @var object
                     */
-                    $conn = DB::connection();
+                    $conn = $obj->getConnection();
 
                     /**
                      * @var \Doctrine\DBAL\Schema\Column
