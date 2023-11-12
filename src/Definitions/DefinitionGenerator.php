@@ -94,7 +94,6 @@ class DefinitionGenerator {
                     ->all();
 
                 $table = $obj->getTable();
-                $list = Schema::getColumnListing($table);
                 $list = Schema::connection($obj->getConnectionName())->getColumnListing($table);
                 $list = array_diff($list, $obj->getHidden());
 
