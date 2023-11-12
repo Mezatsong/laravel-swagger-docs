@@ -100,12 +100,17 @@ class DefinitionGenerator {
                 $properties = [];
                 $required = [];
 
-                foreach ($list as $item) {
+                /**
+                * @var \Illuminate\Database\Connection
+                */
+                $conn = $obj->getConnection();
+                $prefix = $conn->getTablePrefix();
 
-                    /**
-                    * @var object
-                    */
-                    $conn = $obj->getConnection();
+                if ($prefix !== '') {
+                    $table = $prefix . $table;
+                }
+
+                foreach ($list as $item) {
 
                     /**
                      * @var \Doctrine\DBAL\Schema\Column
