@@ -35,7 +35,7 @@ One thing to note is this library leans on being explicit. It will choose to inc
 ### Command line
 Generating the swagger documentation is easy, simply run `php artisan swagger:generate` in your project root. The output of the command will be stored in your storage path linked in config file.
 
-If you wish to generate docs for a subset of your routes, you can pass a filter using `--filter`, for example: `php artisan laravel-swagger:generate --filter="/api"`
+If you wish to generate docs for a subset of your routes, you can pass a filter using `--filter`, for example: `php artisan swagger:generate --filter="/api"`
 
 You can also configure your swagger.php file to always generate schema when accessing Swagger UI or just by adding this line in your .env: `SWAGGER_GENERATE_ALWAYS=true`
 
