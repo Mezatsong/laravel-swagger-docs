@@ -33,9 +33,9 @@ Laravel Swagger Docs works based on recommended practices by Laravel. It will pa
 One thing to note is this library leans on being explicit. It will choose to include keys even if they have a default. For example it chooses to say a route has a deprecated value of false rather than leaving it out. I believe this makes reading the documentation easier by not leaving important information out. The file can be easily cleaned up afterwards if the user chooses to leave out the defaults.
 
 ### Command line
-Generating the swagger documentation is easy, simply run `php artisan laravel-swagger:generate` in your project root. The output of the command will be stored in your storage path linked in config file.
+Generating the swagger documentation is easy, simply run `php artisan swagger:generate` in your project root. The output of the command will be stored in your storage path linked in config file.
 
-If you wish to generate docs for a subset of your routes, you can pass a filter using `--filter`, for example: `php artisan laravel-swagger:generate --filter="/api"`
+If you wish to generate docs for a subset of your routes, you can pass a filter using `--filter`, for example: `php artisan swagger:generate --filter="/api"`
 
 You can also configure your swagger.php file to always generate schema when accessing Swagger UI or just by adding this line in your .env: `SWAGGER_GENERATE_ALWAYS=true`
 
