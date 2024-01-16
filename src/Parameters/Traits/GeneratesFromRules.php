@@ -119,7 +119,7 @@ trait GeneratesFromRules {
                 }
 
                 if (Str::startsWith($rule, 'regex')) {
-                    [$_, $value] = explode(':', $rule);
+                    [$_, $value] = explode(':', $rule, 2);
                     $extra['pattern'] = trim($value);
                 }
             }
@@ -177,7 +177,7 @@ trait GeneratesFromRules {
      */
     protected function getDefaultValue(array $parameterRules): ?string {
         foreach ($parameterRules as $rule) {
-            if (Str::startsWith($rule, 'swagger_default')) {
+            if ((is_string($rule) || method_exists($rule, '__toString')) && Str::startsWith($rule, 'swagger_default')) {
                 [$key, $value] = explode(':', $rule);
                 return trim($value);
             }
@@ -192,7 +192,7 @@ trait GeneratesFromRules {
      */
     protected function getMinValue(array $parameterRules) {
         foreach ($parameterRules as $rule) {
-            if (Str::startsWith($rule, 'swagger_min')) {
+            if ((is_string($rule) || method_exists($rule, '__toString')) && Str::startsWith($rule, 'swagger_min')) {
                 [$key, $value] = explode(':', $rule);
                 return trim($value);
             }
@@ -207,7 +207,7 @@ trait GeneratesFromRules {
      */
     protected function getMaxValue(array $parameterRules) {
         foreach ($parameterRules as $rule) {
-            if (Str::startsWith($rule, 'swagger_max')) {
+            if ((is_string($rule) || method_exists($rule, '__toString')) && Str::startsWith($rule, 'swagger_max')) {
                 [$key, $value] = explode(':', $rule);
                 return trim($value);
             }

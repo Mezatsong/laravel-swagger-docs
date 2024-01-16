@@ -40,6 +40,7 @@ class QueryParametersGenerator implements ParametersGenerator {
         $arrayTypes = [];
 
         foreach ($this->rules as $parameter => $rule) {
+            $parameter = $this->formatParameterName($parameter);
             $parameterRules = $this->splitRules($rule);
             $enums = $this->getEnumValues($parameterRules);
             $type = $this->getParameterType($parameterRules);
@@ -124,6 +125,22 @@ class QueryParametersGenerator implements ParametersGenerator {
             }
         }
         return $parameters;
+    }
+
+    /**
+     * @param string $parameter
+     * @return string
+     */
+    protected function formatParameterName(string $parameter): string {
+        if (!strpos($parameter, '.')) {
+            return $parameter;
+        }
+        $parts = explode('.', $parameter);
+        for ($i = 1; $i < count($parts); $i++) {
+            $parts[$i] = "[$parts[$i]]";
+        }
+
+        return implode('', $parts);
     }
 
 }
