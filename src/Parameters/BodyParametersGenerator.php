@@ -1,8 +1,10 @@
 <?php namespace Mezatsong\SwaggerDocs\Parameters;
 
+use Exception;
 use Illuminate\Support\Arr;
 use Mezatsong\SwaggerDocs\Parameters\Traits\GeneratesFromRules;
 use Mezatsong\SwaggerDocs\Parameters\Interfaces\ParametersGenerator;
+use TypeError;
 
 /**
  * Class BodyParametersGenerator
@@ -42,12 +44,17 @@ class BodyParametersGenerator implements ParametersGenerator {
         $schema = [];
 
         foreach ($this->rules as $parameter => $rule) {
-            $parameterRules = $this->splitRules($rule);
-            $nameTokens = explode('.', $parameter);
-            $this->addToProperties($properties,  $nameTokens, $parameterRules);
+            try {
+                $parameterRules = $this->splitRules($rule);
+                $nameTokens = explode('.', $parameter);
+                $this->addToProperties($properties,  $nameTokens, $parameterRules);
 
-            if ($this->isParameterRequired($parameterRules)) {
-                $required[] = $parameter;
+                if ($this->isParameterRequired($parameterRules)) {
+                    $required[] = $parameter;
+                }
+            } catch (TypeError $e) {
+                $ruleStr = json_encode($rule);
+                throw new Exception("Rule `$parameter => $ruleStr` is not well formated", 0, $e);
             }
         }
 
@@ -159,3 +166,4 @@ class BodyParametersGenerator implements ParametersGenerator {
         return $propertyObject;
     }
 }
+

@@ -94,18 +94,23 @@ class DefinitionGenerator {
                     ->all();
 
                 $table = $obj->getTable();
-                $list = Schema::getColumnListing($table);
+                $list = Schema::connection($obj->getConnectionName())->getColumnListing($table);
                 $list = array_diff($list, $obj->getHidden());
 
                 $properties = [];
                 $required = [];
 
-                foreach ($list as $item) {
+                /**
+                * @var \Illuminate\Database\Connection
+                */
+                $conn = $obj->getConnection();
+                $prefix = $conn->getTablePrefix();
 
-                    /**
-                    * @var object
-                    */
-                    $conn = DB::connection();
+                if ($prefix !== '') {
+                    $table = $prefix . $table;
+                }
+
+                foreach ($list as $item) {
 
                     /**
                      * @var \Doctrine\DBAL\Schema\Column
