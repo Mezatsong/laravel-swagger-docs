@@ -37,7 +37,7 @@ return [
     /**
      * API Path
      */
-    'path'                      =>  env('SWAGGER_PATH', '/documentation'),
+    'path'                      =>  env('SWAGGER_PATH', '/docs'),
 
     /**
      * API Storage Path

@@ -40,7 +40,6 @@
                 const ui = SwaggerUIBundle({
                     url: "{!! $urlToDocs !!}",
                     dom_id: '#swagger-ui',
-                    deepLinking: true,
                     presets: [
                         SwaggerUIBundle.presets.apis,
                         SwaggerUIStandalonePreset
@@ -48,7 +47,16 @@
                     plugins: [
                         SwaggerUIBundle.plugins.DownloadUrl
                     ],
-                    layout: "StandaloneLayout"
+                    layout: "StandaloneLayout",
+                    filter: true,
+                    deepLinking: true,
+                    displayRequestDuration: true,
+                    showExtensions: true,
+                    showCommonExtensions: true,
+                    queryConfigEnabled: true,
+                    persistAuthorization: true,
+                    // "list", "full", "none"
+                    docExpansion: "{{ request()->get('expansion', 'list') }}"
                 });
 
                 window.ui = ui;
