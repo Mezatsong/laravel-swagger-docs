@@ -52,6 +52,7 @@ class QueryParametersGenerator implements ParametersGenerator {
                 $arrayTypes[$key] = $type;
                 continue;
             }
+            $parameter = $this->formatParameterName($parameter);
 
             $parameterObject = [
                 'in'            =>  $this->getParameterLocation(),
@@ -124,6 +125,22 @@ class QueryParametersGenerator implements ParametersGenerator {
             }
         }
         return $parameters;
+    }
+
+    /**
+     * @param string $parameter
+     * @return string
+     */
+    protected function formatParameterName(string $parameter): string {
+        if (!strpos($parameter, '.')) {
+            return $parameter;
+        }
+        $parts = explode('.', $parameter);
+        for ($i = 1; $i < count($parts); $i++) {
+            $parts[$i] = "[$parts[$i]]";
+        }
+
+        return implode('', $parts);
     }
 
 }
