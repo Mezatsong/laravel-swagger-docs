@@ -1,4 +1,4 @@
-<?php 
+<?php
 
 namespace Mezatsong\SwaggerDocs\Definitions;
 
@@ -75,7 +75,7 @@ class DefinitionGenerator {
 
             if ($obj instanceof Model) { //check to make sure it is a model
                 $reflection = new ReflectionClass($obj);
-                
+
                 // $with = $reflection->getProperty('with');
                 // $with->setAccessible(true);
 
@@ -86,7 +86,7 @@ class DefinitionGenerator {
                     ->filter(
                         fn($method) => !empty($method->getReturnType()) &&
                             str_contains(
-                                $method->getReturnType(), 
+                                $method->getReturnType(),
                                 \Illuminate\Database\Eloquent\Relations::class
                             )
                     )
@@ -94,8 +94,7 @@ class DefinitionGenerator {
                     ->all();
 
                 $table = $obj->getTable();
-                $list = Schema::connection($obj->getConnectionName())->getColumnListing($table);
-                $list = array_diff($list, $obj->getHidden());
+                $columns = Schema::getColumns($table);
 
                 $properties = [];
                 $required = [];
@@ -110,39 +109,18 @@ class DefinitionGenerator {
                     $table = $prefix . $table;
                 }
 
-                foreach ($list as $item) {
-
-                    /**
-                     * @var \Doctrine\DBAL\Schema\Column
-                     */
-                    $column = $conn->getDoctrineColumn($table, $item);
-
-                    $data = $this->convertDBalTypeToSwaggerType(
-                        Type::getTypeRegistry()->lookupName($column->getType())
-                    );
-
-                    if ($data['type'] == 'string' && ($len = $column->getLength())) {
-                        $data['description'] .= "($len)";
-                    }
-
-                    $description = $column->getComment();
+                foreach ($columns as $column) {
+                    $description = $column['comment'];
                     if (!is_null($description)) {
-                        $data['description'] .= ": $description";
+                        $column['description'] .= ": $description";
                     }
 
-                    $default = $column->getDefault();
-                    if (!is_null($default)) {
-                        $data['default'] = $default;
-                    }
-                    
-                    $data['nullable'] = ! $column->getNotnull();
+                    $this->addExampleKey($column);
 
-                    $this->addExampleKey($data);
+                    $properties[$column['name']] = $column;
 
-                    $properties[$item] = $data;
-
-                    if ($column->getNotnull()) {
-                        $required[] = $item;
+                    if (!$column['nullable']) {
+                        $required[] = $column['name'];
                     }
                 }
 
@@ -152,7 +130,7 @@ class DefinitionGenerator {
                         'type' => 'object',
                         '$ref' => '#/components/schemas/' . last(explode('\\', $relatedClass)),
                     ];
-                    
+
                     $resultsClass = get_class((object) ($obj->{$relationName}()->getResults()));
 
                     if (str_contains($resultsClass, \Illuminate\Database\Eloquent\Collection::class)) {
@@ -164,7 +142,7 @@ class DefinitionGenerator {
                         $properties[$relationName] = $refObject;
                     }
                 }
-                
+
                 // $required = array_merge($required, $with->getValue($obj));
 
                 foreach ($appends->getValue($obj) as $item) {
@@ -204,7 +182,7 @@ class DefinitionGenerator {
                     'type' => 'object',
                     'properties' => (object) $properties,
                 ];
-                
+
                 if ( ! empty($required)) {
                     $definition['required'] = $required;
                 }
@@ -295,7 +273,7 @@ class DefinitionGenerator {
             case 'bigserial':
             case 'bigint':
                 $property = [
-                    'type' => 'integer', 
+                    'type' => 'integer',
                     'format' => 'int64'
                 ];
                 break;
