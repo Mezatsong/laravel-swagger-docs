@@ -161,10 +161,10 @@ class DefinitionGenerator {
                         $type = $returnType->getName();
 
                         if (Str::contains($type, '\\')) {
-                            $data = [
-                                'type' => 'object',
-                                '$ref' => '#/components/schemas/' . last(explode('\\', $type)),
-                            ];
+                            $data = ['type' => 'object'];
+                            if (is_subclass_of($type, Model::class)) {
+                                $data['$ref'] = '#/components/schemas/' . last(explode('\\', $type));
+                            }
                         } else {
                             $data['type'] = $type;
                             $this->addExampleKey($data);
