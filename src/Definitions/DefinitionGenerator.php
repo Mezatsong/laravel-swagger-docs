@@ -119,11 +119,7 @@ class DefinitionGenerator
                         $swaggerProps['description'] = "$description";
                     }
 
-                    if (isset($column['default']) && $column['default']) {
-                        $swaggerProps['default'] = $column['default'];
-                    } else {
-                        $this->addExampleKey($column);
-                    }
+                    $this->addExampleKey($column);
 
                     if (!$column['nullable']) {
                         $required[] = $column['name'];
@@ -452,5 +448,13 @@ class DefinitionGenerator
             'type'     => 'object',
             'nullable' => true,
         ];
+    }
+
+    private function removeQuotesIfBothEnds(string $string)
+    {
+        if (strlen($string) >= 2 && $string[0] === "'" && $string[strlen($string) - 1] === "'") {
+            return substr($string, 1, -1);
+        }
+        return $string;
     }
 }
