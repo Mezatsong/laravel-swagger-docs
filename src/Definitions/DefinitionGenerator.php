@@ -449,12 +449,4 @@ class DefinitionGenerator
             'nullable' => true,
         ];
     }
-
-    private function removeQuotesIfBothEnds(string $string)
-    {
-        if (strlen($string) >= 2 && $string[0] === "'" && $string[strlen($string) - 1] === "'") {
-            return substr($string, 1, -1);
-        }
-        return $string;
-    }
 }
