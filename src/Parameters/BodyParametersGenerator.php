@@ -175,9 +175,13 @@ class BodyParametersGenerator implements ParametersGenerator {
         }
 
         if ($type === 'array') {
-            Arr::set($propertyObject, 'items', []);
-        } else if ($type === 'object') {
-            Arr::set($propertyObject, 'properties', []);
+            Arr::set($propertyObject, 'items', [
+                'description' => '',
+            ]);
+        } elseif ($type === 'object') {
+            Arr::set($propertyObject, 'properties', [
+                'description' => '',
+            ]);
         }
 
         return $propertyObject;

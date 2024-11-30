@@ -13,23 +13,23 @@ use ReflectionClass;
 
 /**
  * Class DefinitionGenerator
+ *
  * @package Mezatsong\SwaggerDocs\Definitions
  */
-class DefinitionGenerator {
-
-
+class DefinitionGenerator
+{
     /**
      * array of models
+     *
      * @var array
      */
     protected array $models = [];
 
-
     /**
      * DefinitionGenerator constructor.
      */
-    public function __construct(array $ignoredModels = []) {
-
+    public function __construct(array $ignoredModels = [])
+    {
         $this->models = collect(File::allFiles(app_path()))
             ->map(function ($item) {
                 /**
@@ -37,9 +37,11 @@ class DefinitionGenerator {
                  */
                 $containerInstance = Container::getInstance();
                 $path = $item->getRelativePathName();
-                $class = sprintf('\%s%s',
+                $class = sprintf(
+                    '\%s%s',
                     $containerInstance->getNamespace(),
-                    strtr(substr($path, 0, strrpos($path, '.')), '/', '\\'));
+                    strtr(substr($path, 0, strrpos($path, '.')), '/', '\\')
+                );
 
                 return $class;
             })
@@ -59,12 +61,13 @@ class DefinitionGenerator {
             ->toArray();
     }
 
-
     /**
      * Generate definitions informations
+     *
      * @return array
      */
-    function generateSchemas(): array {
+    public function generateSchemas(): array
+    {
         $schemas = [];
 
         foreach ($this->models as $model) {
@@ -82,7 +85,7 @@ class DefinitionGenerator {
 
                 $relations = collect($reflection->getMethods())
                     ->filter(
-                        fn($method) => !empty($method->getReturnType()) &&
+                        fn ($method) => !empty($method->getReturnType()) &&
                             str_contains(
                                 $method->getReturnType(),
                                 "Illuminate\Database\Eloquent\Relations",
@@ -99,8 +102,8 @@ class DefinitionGenerator {
                 $required = [];
 
                 /**
-                * @var \Illuminate\Database\Connection
-                */
+                 * @var \Illuminate\Database\Connection
+                 */
                 $conn = $obj->getConnection();
                 $prefix = $conn->getTablePrefix();
 
@@ -110,10 +113,10 @@ class DefinitionGenerator {
 
                 foreach ($columns as $column) {
                     $swaggerProps = $this->convertDBTypeToSwaggerType($column['type']);
-                    
+
                     $description = $column['comment'];
                     if (!is_null($description)) {
-                        $swaggerProps['description'] .= ": $description";
+                        $swaggerProps['description'] = "$description";
                     }
 
                     if (isset($column['default']) && $column['default']) {
@@ -125,23 +128,31 @@ class DefinitionGenerator {
                     if (!$column['nullable']) {
                         $required[] = $column['name'];
                     }
-                    
+
                     $properties[$column['name']] = $swaggerProps;
                 }
 
                 foreach ($relations as $relationName) {
                     $relatedClass = get_class($obj->{$relationName}()->getRelated());
-                    $refObject = [
-                        'type' => 'object',
-                        '$ref' => '#/components/schemas/' . last(explode('\\', $relatedClass)),
-                    ];
+
+                    if (str_starts_with($relatedClass, 'App\\')) {
+                        $refObject = [
+                            'type' => 'object',
+                            '$ref' => '#/components/schemas/' . last(explode('\\', $relatedClass)),
+                        ];
+                    } else {
+                        $refObject = [
+                            'type'        => 'object',
+                            'description' => '#/components/schemas/' . last(explode('\\', $relatedClass)),
+                        ];
+                    }
 
                     $resultsClass = get_class((object) ($obj->{$relationName}()->getResults()));
 
                     if (str_contains($resultsClass, \Illuminate\Database\Eloquent\Collection::class)) {
                         $properties[$relationName] = [
                             'type' => 'array',
-                            'items'=> $refObject
+                            'items'=> $refObject,
                         ];
                     } else {
                         $properties[$relationName] = $refObject;
@@ -152,7 +163,7 @@ class DefinitionGenerator {
 
                 foreach ($appends->getValue($obj) as $item) {
                     $methodeName = 'get' . ucfirst(Str::camel($item)) . 'Attribute';
-                    if ( ! $reflection->hasMethod($methodeName)) {
+                    if (!$reflection->hasMethod($methodeName)) {
                         Log::warning("[Mezatsong\SwaggerDocs] Method $model::$methodeName not found while parsing '$item' attribute");
                         continue;
                     }
@@ -167,54 +178,57 @@ class DefinitionGenerator {
 
                         if (Str::contains($type, '\\')) {
                             $data = ['type' => 'object'];
-                            if (is_subclass_of($type, Model::class)) {
+                            if (is_subclass_of($type, Model::class) && str_starts_with($relatedClass, 'App\\')) {
                                 $data['$ref'] = '#/components/schemas/' . last(explode('\\', $type));
                             }
                         } else {
                             $data = $this->convertPhpTypeToSwaggerType($type);
                             $this->addExampleKey($data);
                         }
+                    } else {
+                        $data = ['type' => 'object', 'nullable' => true];
                     }
 
                     $properties[$item] = $data;
 
-                    if ($returnType && false == $returnType->allowsNull()) {
+                    if ($returnType && false == $returnType->allowsNull() && !in_array($item, $required ?? [])) {
                         $required[] = $item;
                     }
                 }
 
                 $definition = [
-                    'type' => 'object',
+                    'type'       => 'object',
                     'properties' => (object) $properties,
                 ];
 
-                if ( ! empty($required)) {
+                if (!empty($required)) {
                     $definition['required'] = $required;
                 }
 
-                $schemas[ $this->getModelName($obj) ] = $definition;
+                $schemas[$this->getModelName($obj)] = $definition;
             }
         }
 
         return $schemas;
     }
 
-
     /**
      * Get array of models
+     *
      * @return array array of models
      */
-    function getModels(): array {
+    public function getModels(): array
+    {
         return $this->models;
     }
 
-
-    private function getModelName($model): string {
+    private function getModelName($model): string
+    {
         return last(explode('\\', get_class($model)));
     }
 
-
-    private function addExampleKey(array & $property): void {
+    private function addExampleKey(array &$property): void
+    {
         if (Arr::has($property, 'type')) {
             switch ($property['type']) {
                 case 'bigserial':
@@ -261,9 +275,8 @@ class DefinitionGenerator {
                     break;
                 case 'bool':
                 case 'boolean':
-                    Arr::set($property, 'example', rand(0,1) == 0);
+                    Arr::set($property, 'example', rand(0, 1) == 0);
                     break;
-
                 default:
                     # code...
                     break;
@@ -271,17 +284,27 @@ class DefinitionGenerator {
         }
     }
 
+    private function cleanDatabaseType(string $dbType)
+    {
+        $cleanedType = preg_replace('/\([^)]+\)/', '', strtolower($dbType));
+        $cleanedType = explode(' ', $cleanedType)[0];
+        $cleanedType = preg_replace('/\s+(unsigned|null|unique|default|current_timestamp|primary key|serial|auto_increment)/i', '', $cleanedType);
+        return trim($cleanedType);
+    }
+
     /**
      * @return array array of with 'type' and 'format' as keys
      */
-    private function convertDBTypeToSwaggerType(string $type): array {
-        $lowerType = strtolower($type);
+    private function convertDBTypeToSwaggerType(string $dbType): array
+    {
+        // We use preg_replace to remove parenthesis, eg: "int(20)" become just "int"
+        $lowerType = $this->cleanDatabaseType($dbType);
         switch ($lowerType) {
             case 'bigserial':
             case 'bigint':
                 $property = [
-                    'type' => 'integer',
-                    'format' => 'int64'
+                    'type'   => 'integer',
+                    'format' => 'int64',
                 ];
                 break;
             case 'serial':
@@ -294,16 +317,16 @@ class DefinitionGenerator {
                 break;
             case 'float':
                 $property = [
-                    'type' => 'number',
-                    'format' => 'float'
+                    'type'   => 'number',
+                    'format' => 'float',
                 ];
                 break;
             case 'decimal':
             case 'double':
             case 'real':
                 $property = [
-                    'type' => 'number',
-                    'format' => 'double'
+                    'type'   => 'number',
+                    'format' => 'double',
                 ];
                 break;
             case 'boolean':
@@ -311,14 +334,14 @@ class DefinitionGenerator {
                 break;
             case 'date':
                 $property = [
-                    'type' => 'string',
+                    'type'   => 'string',
                     'format' => 'date',
                 ];
                 break;
             case 'datetime':
             case 'timestamp':
                 $property = [
-                    'type' => 'string',
+                    'type'   => 'string',
                     'format' => 'date-time',
                 ];
                 break;
@@ -326,7 +349,7 @@ class DefinitionGenerator {
             case 'varbinary':
             case 'blob':
                 $property = [
-                    'type' => 'string',
+                    'type'   => 'string',
                     'format' => 'binary',
                 ];
                 break;
@@ -339,7 +362,7 @@ class DefinitionGenerator {
                 break;
             case 'time':
             case 'char':
-                $property = ['type' => 'string', 'description' => $type];
+                $property = ['type' => 'string', 'description' => $dbType];
                 break;
             case 'enum':
                 $property = ['type' => 'string'];
@@ -347,16 +370,16 @@ class DefinitionGenerator {
             case 'set':
             default:
                 $property = [
-                    'type' => 'object', 
-                    'nullable' => true, 
+                    'type'                 => 'object',
+                    'nullable'             => true,
                     'additionalProperties' => true,
-                    'description' => $type,
+                    'description'          => $dbType,
                 ];
                 break;
         }
 
-        if (!isset($property['format']) && in_array($type, ['boolean', 'enum', 'object']) ) {
-            $property['format'] = $type;
+        if (!isset($property['format']) && in_array($dbType, ['boolean', 'enum', 'object'])) {
+            $property['format'] = $dbType;
         }
 
         return $property;
@@ -365,68 +388,69 @@ class DefinitionGenerator {
     /**
      * @return array array of with 'type' and 'format' as keys
      */
-    private function convertPhpTypeToSwaggerType(string $phpType): array {
+    private function convertPhpTypeToSwaggerType(string $phpType): array
+    {
         $mapping = [
             'int' => [
-                'type' => 'integer', 
-                'format' => 'int32'
+                'type'   => 'integer',
+                'format' => 'int32',
             ],
             'float' => [
-                'type' => 'number', 
-                'format' => 'float'
+                'type'   => 'number',
+                'format' => 'float',
             ],
             'string' => [
-                'type' => 'string'
+                'type' => 'string',
             ],
             'bool' => [
-                'type' => 'boolean'
+                'type' => 'boolean',
             ],
             'array' => [
-                'type' => 'array', 
+                'type'  => 'array',
                 'items' => [
-                    'type' => 'object', 
-                    'nullable' => true, 
-                    'additionalProperties' => true
+                    'type'                 => 'object',
+                    'nullable'             => true,
+                    'additionalProperties' => true,
                 ],
             ],
             'object' => [
-                'type' => 'object', 
+                'type'                 => 'object',
                 'additionalProperties' => true,
             ],
             '?int' => [
-                'type' => 'integer', 
-                'nullable' => true
+                'type'     => 'integer',
+                'nullable' => true,
             ],
             '?float' => [
-                'type' => 'number', 
-                'format' => 'float', 
-                'nullable' => true
+                'type'     => 'number',
+                'format'   => 'float',
+                'nullable' => true,
             ],
             '?string' => [
-                'type' => 'string', 
-                'nullable' => true
+                'type'     => 'string',
+                'nullable' => true,
             ],
             '?bool' => [
-                'type' => 'boolean', 
-                'nullable' => true
+                'type'     => 'boolean',
+                'nullable' => true,
             ],
             '?array' => [
-                'type' => 'array', 
+                'type'  => 'array',
                 'items' => [
-                    'type' => 'object', 
-                    'nullable' => true, 
-                ], 
+                    'type'     => 'object',
+                    'nullable' => true,
+                ],
                 'nullable' => true,
             ],
             '?object' => [
-                'type' => 'object', 
+                'type'     => 'object',
                 'nullable' => true,
             ],
         ];
-    
+
         return $mapping[strtolower($phpType)] ?? [
-            'type' => 'object', 
-            'nullable' => true, 
+            'type'     => 'object',
+            'nullable' => true,
         ];
     }
 }
