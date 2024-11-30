@@ -109,8 +109,8 @@ return [
             '/_ignition/share-report',
             '/_ignition/scripts/{script}',
             '/_ignition/styles/{style}',
-            env('SWAGGER_PATH', '/documentation'),
-            env('SWAGGER_PATH', '/documentation') . '/content'
+            env('SWAGGER_PATH', '/docs'),
+            env('SWAGGER_PATH', '/docs') . '/content'
         ],
 
         'models' => []

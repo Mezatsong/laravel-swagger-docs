@@ -76,7 +76,7 @@ class SwaggerController extends BaseController {
         }
         return ResponseFacade::make(view('swagger::index', [
             'secure'            =>  swagger_is_connection_secure(),
-            'urlToDocs'         =>  $url . config('swagger.path', '/documentation') . '/content'
+            'urlToDocs'         =>  $url . config('swagger.path', '/docs') . '/content'
         ]), 200);
     }
 

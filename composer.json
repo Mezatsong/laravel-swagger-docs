@@ -12,7 +12,6 @@
     ],
     "require": {
         "php": ">=7.3 || 8.*",
-        "doctrine/dbal": "*",
         "phpdocumentor/reflection-docblock": "^5.2"
     },
     "require-dev": {

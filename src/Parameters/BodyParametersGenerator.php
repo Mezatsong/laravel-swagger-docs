@@ -47,7 +47,7 @@ class BodyParametersGenerator implements ParametersGenerator {
             try {
                 $parameterRules = $this->splitRules($rule);
                 $nameTokens = explode('.', $parameter);
-                $this->addToProperties($properties,  $nameTokens, $parameterRules);
+                $this->addToProperties($properties, $nameTokens, $parameterRules);
 
                 if ($this->isParameterRequired($parameterRules)) {
                     $required[] = $parameter;
@@ -109,24 +109,41 @@ class BodyParametersGenerator implements ParametersGenerator {
         }
 
         if ($name === '*') {
-            $name = 0;
-        }
+            if (empty($properties)) {
+                $propertyObject = $this->createNewPropertyObject($type, $rules);
+                foreach ($propertyObject as $key => $value) {
+                    Arr::set($properties, $key, $value);
+                }
+                $extra = $this->getParameterExtra($type, $rules);
+                foreach($extra as $key => $value) {
+                    Arr::set($properties, $key, $value);
+                }
+            } else {
+                Arr::set($properties, 'type', $type);
+            }
 
-        if (!Arr::has($properties, $name)) {
-            $propertyObject = $this->createNewPropertyObject($type, $rules);
-            Arr::set($properties, $name, $propertyObject);
-            $extra = $this->getParameterExtra($type, $rules);
-            foreach($extra as $key => $value) {
-                Arr::set($properties, $name . '.' . $key, $value);
+            if ($type === 'array') {
+                $this->addToProperties($properties['items'], $nameTokens, $rules);
+            } else if ($type === 'object' && isset($properties['properties'])) {
+                $this->addToProperties($properties['properties'], $nameTokens, $rules);
             }
         } else {
-            Arr::set($properties, $name . '.type', $type);
-        }
+            if (!Arr::has($properties, $name)) {
+                $propertyObject = $this->createNewPropertyObject($type, $rules);
+                Arr::set($properties, $name, $propertyObject);
+                $extra = $this->getParameterExtra($type, $rules);
+                foreach($extra as $key => $value) {
+                    Arr::set($properties, $name . '.' . $key, $value);
+                }
+            } else {
+                Arr::set($properties, $name . '.type', $type);
+            }
 
-        if ($type === 'array') {
-            $this->addToProperties($properties[$name]['items'], $nameTokens, $rules);
-        } else if ($type === 'object' && isset($properties[$name]['properties'])) {
-            $this->addToProperties($properties[$name]['properties'], $nameTokens, $rules);
+            if ($type === 'array') {
+                $this->addToProperties($properties[$name]['items'], $nameTokens, $rules);
+            } else if ($type === 'object' && isset($properties[$name]['properties'])) {
+                $this->addToProperties($properties[$name]['properties'], $nameTokens, $rules);
+            }
         }
     }
 

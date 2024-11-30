@@ -2,10 +2,8 @@
 
 namespace Mezatsong\SwaggerDocs\Definitions;
 
-use Doctrine\DBAL\Types\Type;
 use Illuminate\Container\Container;
 use Illuminate\Database\Eloquent\Model;
-use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\File;
 use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\Arr;
@@ -87,7 +85,8 @@ class DefinitionGenerator {
                         fn($method) => !empty($method->getReturnType()) &&
                             str_contains(
                                 $method->getReturnType(),
-                                \Illuminate\Database\Eloquent\Relations::class
+                                "Illuminate\Database\Eloquent\Relations",
+                                // \Illuminate\Database\Eloquent\Relations::class
                             )
                     )
                     ->pluck('name')
@@ -110,18 +109,24 @@ class DefinitionGenerator {
                 }
 
                 foreach ($columns as $column) {
+                    $swaggerProps = $this->convertDBTypeToSwaggerType($column['type']);
+                    
                     $description = $column['comment'];
                     if (!is_null($description)) {
-                        $column['description'] .= ": $description";
+                        $swaggerProps['description'] .= ": $description";
                     }
 
-                    $this->addExampleKey($column);
-
-                    $properties[$column['name']] = $column;
+                    if (isset($column['default']) && $column['default']) {
+                        $swaggerProps['default'] = $column['default'];
+                    } else {
+                        $this->addExampleKey($column);
+                    }
 
                     if (!$column['nullable']) {
                         $required[] = $column['name'];
                     }
+                    
+                    $properties[$column['name']] = $swaggerProps;
                 }
 
                 foreach ($relations as $relationName) {
@@ -166,7 +171,7 @@ class DefinitionGenerator {
                                 $data['$ref'] = '#/components/schemas/' . last(explode('\\', $type));
                             }
                         } else {
-                            $data['type'] = $type;
+                            $data = $this->convertPhpTypeToSwaggerType($type);
                             $this->addExampleKey($data);
                         }
                     }
@@ -218,6 +223,7 @@ class DefinitionGenerator {
                     break;
                 case 'serial':
                 case 'integer':
+                case 'int':
                     Arr::set($property, 'example', rand(1000000000, 2000000000));
                     break;
                 case 'mediumint':
@@ -253,6 +259,7 @@ class DefinitionGenerator {
                 case 'text':
                     Arr::set($property, 'example', 'a long text');
                     break;
+                case 'bool':
                 case 'boolean':
                     Arr::set($property, 'example', rand(0,1) == 0);
                     break;
@@ -267,7 +274,7 @@ class DefinitionGenerator {
     /**
      * @return array array of with 'type' and 'format' as keys
      */
-    private function convertDBalTypeToSwaggerType(string $type): array {
+    private function convertDBTypeToSwaggerType(string $type): array {
         $lowerType = strtolower($type);
         switch ($lowerType) {
             case 'bigserial':
@@ -281,7 +288,6 @@ class DefinitionGenerator {
             case 'integer':
             case 'mediumint':
             case 'smallint':
-            case 'tinyint':
             case 'tinyint':
             case 'year':
                 $property = ['type' => 'integer'];
@@ -324,20 +330,103 @@ class DefinitionGenerator {
                     'format' => 'binary',
                 ];
                 break;
-            case 'time':
             case 'string':
             case 'text':
-            case 'char':
+            case 'mediumtext':
+            case 'longtext':
             case 'varchar':
+                $property = ['type' => 'string'];
+                break;
+            case 'time':
+            case 'char':
+                $property = ['type' => 'string', 'description' => $type];
+                break;
             case 'enum':
+                $property = ['type' => 'string'];
+                break;
             case 'set':
             default:
-                $property = ['type' => 'string'];
+                $property = [
+                    'type' => 'object', 
+                    'nullable' => true, 
+                    'additionalProperties' => true,
+                    'description' => $type,
+                ];
                 break;
         }
 
-        $property['description'] = $type;
+        if (!isset($property['format']) && in_array($type, ['boolean', 'enum', 'object']) ) {
+            $property['format'] = $type;
+        }
 
         return $property;
+    }
+
+    /**
+     * @return array array of with 'type' and 'format' as keys
+     */
+    private function convertPhpTypeToSwaggerType(string $phpType): array {
+        $mapping = [
+            'int' => [
+                'type' => 'integer', 
+                'format' => 'int32'
+            ],
+            'float' => [
+                'type' => 'number', 
+                'format' => 'float'
+            ],
+            'string' => [
+                'type' => 'string'
+            ],
+            'bool' => [
+                'type' => 'boolean'
+            ],
+            'array' => [
+                'type' => 'array', 
+                'items' => [
+                    'type' => 'object', 
+                    'nullable' => true, 
+                    'additionalProperties' => true
+                ],
+            ],
+            'object' => [
+                'type' => 'object', 
+                'additionalProperties' => true,
+            ],
+            '?int' => [
+                'type' => 'integer', 
+                'nullable' => true
+            ],
+            '?float' => [
+                'type' => 'number', 
+                'format' => 'float', 
+                'nullable' => true
+            ],
+            '?string' => [
+                'type' => 'string', 
+                'nullable' => true
+            ],
+            '?bool' => [
+                'type' => 'boolean', 
+                'nullable' => true
+            ],
+            '?array' => [
+                'type' => 'array', 
+                'items' => [
+                    'type' => 'object', 
+                    'nullable' => true, 
+                ], 
+                'nullable' => true,
+            ],
+            '?object' => [
+                'type' => 'object', 
+                'nullable' => true,
+            ],
+        ];
+    
+        return $mapping[strtolower($phpType)] ?? [
+            'type' => 'object', 
+            'nullable' => true, 
+        ];
     }
 }

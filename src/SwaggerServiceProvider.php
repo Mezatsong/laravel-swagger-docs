@@ -3,9 +3,6 @@
 namespace Mezatsong\SwaggerDocs;
 
 use Illuminate\Support\Arr;
-use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Facades\Log;
-use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Support\ServiceProvider;
 use Mezatsong\SwaggerDocs\Commands\GenerateSwaggerDocumentation;
@@ -51,12 +48,6 @@ class SwaggerServiceProvider extends ServiceProvider {
         );
 
         $this->loadValidationRules();
-
-        try {
-            Schema::registerEnumMapping('enum', 'string');
-        } catch (\Exception $e) {
-            Log::error('[Mezatsong\SwaggerDocs] Could not register enum type as string because of connexion error.');
-        }
 
         if (file_exists($file = __DIR__ . '/helpers.php')) {
             require $file;

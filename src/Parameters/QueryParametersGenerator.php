@@ -62,7 +62,8 @@ class QueryParametersGenerator implements ParametersGenerator {
             ];
 
             if (\count($enums) > 0) {
-                Arr::set($parameterObject, 'enum', $enums);
+                Arr::set($parameterObject, 'schema.type', 'string');
+                Arr::set($parameterObject, 'schema.enum', $enums);
             } else {
                 Arr::set($parameterObject, 'schema.type', $type);
             }
