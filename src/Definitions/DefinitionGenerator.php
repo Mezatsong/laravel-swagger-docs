@@ -304,6 +304,7 @@ class DefinitionGenerator
                 ];
                 break;
             case 'serial':
+            case 'int':
             case 'integer':
             case 'mediumint':
             case 'smallint':
