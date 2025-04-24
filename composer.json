@@ -1,6 +1,6 @@
 {
-    "name": "mezatsong/laravel-swagger-docs",
-    "description": "Swagger docs generator for Laravel api",
+    "name": "kenik/laravel-swagger-docs",
+    "description": "Swagger docs generator for Laravel api (fork of MEZATSONG's package)",
     "type": "library",
     "keywords": ["laravel", "swagger", "docs", "generator"],
     "license": "MIT",
@@ -8,6 +8,10 @@
         {
             "name": "MEZATSONG TSAFACK Carrel",
             "email": "meztsacar@gmail.com"
+        },
+        {
+            "name": "kenik",
+            "email": "kenik2006@mail.ru"
         }
     ],
     "require": {
