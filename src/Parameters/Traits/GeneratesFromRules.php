@@ -28,6 +28,8 @@ trait GeneratesFromRules {
     protected function getParameterType(array $parameterRules): string {
         if (in_array('integer', $parameterRules)) {
             return 'integer';
+        } elseif (in_array('int', $parameterRules)) {
+            return 'integer';
         } elseif (in_array('numeric', $parameterRules)) {
             return 'number';
         } elseif (in_array('boolean', $parameterRules)) {

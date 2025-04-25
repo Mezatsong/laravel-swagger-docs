@@ -82,7 +82,7 @@ class QueryParametersGenerator implements ParametersGenerator {
             }
 
             if ($type === 'array') {
-                Arr::set($parameterObject, 'items', [
+                Arr::set($parameterObject, 'schema.items', [
                     'type'  =>  'string'
                 ]);
             }
@@ -121,8 +121,8 @@ class QueryParametersGenerator implements ParametersGenerator {
                     ]
                 ];
             } else {
-                $parameters[$key]['type'] = 'array';
-                $parameters[$key]['items']['type'] = $type;
+                $parameters[$key]['schema']['type'] = 'array';
+                $parameters[$key]['schema']['items']['type'] = $type;
             }
         }
         return $parameters;

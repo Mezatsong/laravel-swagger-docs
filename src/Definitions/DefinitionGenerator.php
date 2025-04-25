@@ -361,7 +361,24 @@ class DefinitionGenerator
                 $property = ['type' => 'string', 'description' => $dbType];
                 break;
             case 'enum':
+            case 'character':
+            case 'jsonb':
                 $property = ['type' => 'string'];
+                break;
+            case 'uuid':
+                $property = [
+                    'type'   => 'string',
+                    'format' => 'uuid',
+                ];
+                break;
+            case 'uuid[]':
+                $property = [
+                    'type'   => 'array',
+                    'items' => [
+                        'type'   => 'string',
+                        'format' => 'uuid',
+                    ],
+                ];
                 break;
             case 'set':
             default:
