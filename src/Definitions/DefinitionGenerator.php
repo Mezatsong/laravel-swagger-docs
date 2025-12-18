@@ -292,9 +292,11 @@ class DefinitionGenerator
      * @return array array of with 'type' and 'format' as keys
      */
     private function convertDBTypeToSwaggerType(string $dbType): array
-    {
-        // We use preg_replace to remove parenthesis, eg: "int(20)" become just "int"
-        $lowerType = $this->cleanDatabaseType($dbType);
+    {   
+        $lowerType = $dbType == 'tinyint(1)' 
+            ? 'boolean' // tinyint(1) is a boolean
+            : $this->cleanDatabaseType($dbType); // We use preg_replace to remove parenthesis, eg: "int(20)" become just "int"
+            
         switch ($lowerType) {
             case 'bigserial':
             case 'bigint':
