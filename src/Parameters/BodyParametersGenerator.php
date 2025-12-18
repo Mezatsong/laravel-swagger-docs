@@ -109,7 +109,7 @@ class BodyParametersGenerator implements ParametersGenerator {
         }
 
         if ($name === '*') {
-            if (empty($properties)) {
+            if (!empty($properties) && !Arr::has($properties, 'properties')) {
                 $propertyObject = $this->createNewPropertyObject($type, $rules);
                 foreach ($propertyObject as $key => $value) {
                     Arr::set($properties, $key, $value);
